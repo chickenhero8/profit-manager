@@ -12,7 +12,7 @@
     <link rel="apple-touch-icon" href="https://img.icons8.com/fluent/180/000000/calculator.png">
     <link rel="icon" type="image/png" href="https://img.icons8.com/fluent/48/000000/calculator.png">
 
-    <title>利益計算マネージャー v45</title>
+    <title>利益計算マネージャー v46</title>
     <style>
         :root {
             --primary-color: #3876f0; --success-color: #28a745;
@@ -36,7 +36,6 @@
 
         #main-app { display: none; }
 
-        /* デザインパーツ */
         .container { max-width: 500px; margin: 0 auto; }
         .card { background: white; padding: 15px; border-radius: 15px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); margin-bottom: 15px; }
         .form-group { margin-bottom: 12px; position: relative; }
@@ -48,10 +47,6 @@
         #search-status { position: absolute; right: 5px; top: 0; font-size: 0.7rem; color: var(--warning-color); font-weight: bold; }
         .btn-sub { height: 44px; padding: 0 15px; background: #e5e5ea; color: var(--primary-color); border-radius: 10px; border: none; font-weight: bold; }
         
-        .required-label { color: var(--danger-color); font-size: 0.7rem; margin-left: 5px; font-weight: bold; }
-        .flash-error { animation: flash 0.5s ease 3; border-color: var(--danger-color) !important; }
-        @keyframes flash { 50% { background-color: #ffcccc; transform: scale(1.05); } }
-
         .live-preview { display: flex; justify-content: space-around; background: #f8f9fa; padding: 10px; border-radius: 10px; margin-top: 10px; border: 1px dashed #ccc; font-size: 0.8rem; }
         .live-item { text-align: center; }
         .live-item span { display: block; font-size: 0.65rem; color: #666; }
@@ -72,7 +67,6 @@
         .sum-val { font-weight: bold; text-align: right; min-width: 80px; }
         .pt-summary { margin-top: 10px; padding-top: 10px; border-top: 1px dashed #ccc; display: grid; grid-template-columns: repeat(3, 1fr); gap: 5px; font-size: 0.75rem; }
         .pt-item { display: flex; justify-content: space-between; background: #f8f9fa; padding: 4px 6px; border-radius: 5px; }
-        .cash-total-item { background: #f0ebf8 !important; border: 1px solid var(--cash-color); }
 
         .history-item { background: white; padding: 12px; border-radius: 12px; margin-bottom: 10px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
         .item-header { display: flex; gap: 5px; align-items: center; margin-bottom: 8px; flex-wrap: wrap; }
@@ -85,7 +79,6 @@
         .badge { padding: 1px 5px; border-radius: 4px; font-size: 0.65rem; font-weight: bold; }
         .shop-badge { background: #e3f2fd; color: #0d47a1; }
         .pt-badge { background: #e8f5e9; color: #2e7d32; }
-        .jan-copy { color: var(--primary-color); font-size: 0.65rem; cursor: pointer; text-decoration: underline; display: block; margin-top: 3px; }
         
         .price-col { text-align: right; }
         .profit-val { font-size: 1.1rem; font-weight: bold; color: var(--primary-color); }
@@ -101,12 +94,12 @@
         .modal-content { background: white; padding: 20px; border-radius: 15px; width: 85%; max-width: 400px; }
     </style>
 </head>
-<body>
+<body onload="initApp()">
 
 <div id="lock-screen">
     <div class="lock-content">
         <h2 style="font-size:1.2rem; margin-bottom:20px;">利益マネージャー<br><small style="font-weight:normal; color:#666;">パスコードを入力</small></h2>
-        <input type="tel" id="passInput" class="pass-input" maxlength="4" placeholder="••••" oninput="checkPasscode()">
+        <input type="tel" id="passInput" class="pass-input" maxlength="4" placeholder="••••" oninput="checkPasscode()" autofocus>
         <p id="errorMsg" style="color:var(--danger-color); font-size:0.8rem; display:none;">パスコードが違います</p>
     </div>
 </div>
@@ -126,7 +119,7 @@
             <div class="form-group">
                 <div class="input-row">
                     <div style="flex:1" id="shop-area">
-                        <label>購入価格 <span id="shop-alert" class="required-label">※選択必須</span></label>
+                        <label>購入価格 <span id="shop-alert" style="color:red; font-size:0.7rem;">※選択必須</span></label>
                         <input type="number" inputmode="numeric" id="buyPrice" disabled oninput="updateLiveCalc()">
                         <div class="toggle-buttons">
                             <button class="btn-toggle shop-btn" onclick="setShop('楽天', this)">楽天</button>
@@ -137,7 +130,7 @@
                         </div>
                     </div>
                     <div style="flex:1" id="pt-area">
-                        <label>ポイント <span id="pt-alert" class="required-label">※選択必須</span></label>
+                        <label>ポイント <span id="pt-alert" style="color:red; font-size:0.7rem;">※選択必須</span></label>
                         <input type="number" inputmode="numeric" id="points" disabled oninput="updateLiveCalc()">
                         <div class="toggle-buttons">
                             <button class="btn-toggle pt-btn" onclick="setPt('楽天', this)">楽天</button>
@@ -218,15 +211,25 @@
 </div>
 
 <script>
-    const CORRECT_PASSCODE = "1234"; // パスワード設定
+    const CORRECT_PASSCODE = "1234"; 
+
+    // 起動時の処理
+    function initApp() {
+        // セッションストレージを確認（ブラウザを閉じるまで有効）
+        if (sessionStorage.getItem('isUnlocked') === 'true') {
+            unlockApp();
+        } else {
+            // パスコード入力欄に自動フォーカス
+            document.getElementById('passInput').focus();
+        }
+    }
 
     function checkPasscode() {
         const input = document.getElementById('passInput');
         const error = document.getElementById('errorMsg');
         if (input.value === CORRECT_PASSCODE) {
-            document.getElementById('lock-screen').style.display = 'none';
-            document.getElementById('main-app').style.display = 'block';
-            render();
+            sessionStorage.setItem('isUnlocked', 'true'); // セッションに保存
+            unlockApp();
         } else if (input.value.length === 4) {
             error.style.display = 'block';
             input.value = '';
@@ -234,6 +237,13 @@
         }
     }
 
+    function unlockApp() {
+        document.getElementById('lock-screen').style.display = 'none';
+        document.getElementById('main-app').style.display = 'block';
+        render();
+    }
+
+    /* 以下、アプリロジックはv45を継承 */
     let historyData = JSON.parse(localStorage.getItem('myHistoryV43') || '[]');
     let janLeaningData = JSON.parse(localStorage.getItem('janLeaningV39') || '{}');
     let currentShop = ""; let currentPt = ""; let currentTab = 'open';
@@ -259,11 +269,11 @@
         const status = document.getElementById('search-status');
         if (janLeaningData[jan]) {
             document.getElementById('productName').value = janLeaningData[jan];
-            status.innerText = "⭐学習済";
+            status.innerText = "⭐";
             setTimeout(() => status.innerText = "", 2000);
             return;
         }
-        status.innerText = "🔍...";
+        status.innerText = "🔍";
         try {
             const res = await fetch(`https://corsproxy.io/?${encodeURIComponent('https://kaitori.wiki/search?type=&keyword=' + jan)}`);
             const html = await res.text();
@@ -276,7 +286,7 @@
                 status.innerText = "✅";
                 janLeaningData[jan] = foundName;
                 localStorage.setItem('janLeaningV39', JSON.stringify(janLeaningData));
-            } else { status.innerText = "❓未登録"; }
+            } else { status.innerText = "❓"; }
         } catch (e) { status.innerText = "⚠️"; }
         setTimeout(() => status.innerText = "", 2000);
     }
@@ -289,12 +299,10 @@
         document.querySelectorAll('.shop-btn').forEach(b => b.classList.remove('active'));
         if(currentShop === name) {
             currentShop = "";
-            document.getElementById('shop-alert').style.display = 'inline';
             document.getElementById('buyPrice').disabled = true;
         } else {
             currentShop = name;
             btn.classList.add('active');
-            document.getElementById('shop-alert').style.display = 'none';
             document.getElementById('buyPrice').disabled = false;
         }
         updateLiveCalc();
@@ -304,12 +312,10 @@
         document.querySelectorAll('.pt-btn').forEach(b => b.classList.remove('active'));
         if(currentPt === name) {
             currentPt = "";
-            document.getElementById('pt-alert').style.display = 'inline';
             document.getElementById('points').disabled = true;
         } else {
             currentPt = name;
             btn.classList.add('active');
-            document.getElementById('pt-alert').style.display = 'none';
             document.getElementById('points').disabled = false;
         }
         updateLiveCalc();
@@ -322,17 +328,8 @@
         searchProduct(clean);
     }
 
-    function copyJan(jan) {
-        navigator.clipboard.writeText(jan);
-        alert('JANコピー完了');
-    }
-
     function saveData() {
-        let error = false;
-        if(!currentShop) { document.getElementById('shop-area').classList.add('flash-error'); error = true; }
-        if(!currentPt) { document.getElementById('pt-area').classList.add('flash-error'); error = true; }
-        if(error) { setTimeout(() => { document.querySelectorAll('.flash-error').forEach(e => e.classList.remove('flash-error')); }, 1500); return; }
-
+        if(!currentShop || !currentPt) { alert("購入場所とポイントを選択してください"); return; }
         const pName = document.getElementById('productName').value || "商品名なし";
         const jan = document.getElementById('janCode').value;
         const item = {
@@ -350,11 +347,8 @@
         };
         item.profit = item.sell + item.pts - item.buy;
         item.cash = item.sell - item.buy;
-
-        if(editingId) {
-            historyData = historyData.map(i => i.id === editingId ? item : i);
-            editingId = null;
-        } else { historyData.unshift(item); }
+        if(editingId) { historyData = historyData.map(i => i.id === editingId ? item : i); editingId = null; }
+        else { historyData.unshift(item); }
         localStorage.setItem('myHistoryV43', JSON.stringify(historyData));
         location.reload();
     }
@@ -433,7 +427,6 @@
                             <p>購入: <b>${item.buy.toLocaleString()}</b> <span class="badge shop-badge">${item.shop}</span></p>
                             <p>売却: <b>${item.sell.toLocaleString()}</b> <span class="badge shop-badge">${item.platform}</span></p>
                             <p style="color:var(--cash-color)">現金: <b>${item.cash.toLocaleString()}円</b> <span class="badge pt-badge">+${item.pts}(${item.ptName})</span></p>
-                            ${item.jan ? `<span class="jan-copy" onclick="copyJan('${item.jan}')">📋 ${item.jan}</span>` : ''}
                         </div>
                         <div class="price-col">
                             <div class="profit-val" style="color:${item.profit >= 0 ? 'var(--success-color)' : 'var(--danger-color)'}">${item.profit.toLocaleString()}円</div>
@@ -453,7 +446,6 @@
         if(currentTab === 'closed' && filtered.length > 0) {
             document.getElementById('avgRate').innerText = (totalRate / filtered.length).toFixed(1);
             let ptHTML = Object.entries(ptSum).map(([name, val]) => `<div class="pt-item"><span>${name}:</span><b>${val.toLocaleString()}</b></div>`).join('');
-            ptHTML += `<div class="pt-item cash-total-item"><span>現金合計:</span><b>${totalC.toLocaleString()}</b></div>`;
             document.getElementById('ptBreakdown').innerHTML = ptHTML;
         }
     }
