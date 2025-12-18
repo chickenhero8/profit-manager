@@ -1,0 +1,474 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="robots" content="noindex,nofollow">
+    <title>利益計算マネージャー v44</title>
+    <style>
+        :root {
+            --primary-color: #3876f0; --success-color: #28a745;
+            --danger-color: #dc3545; --warning-color: #ff9500;
+            --cash-color: #6f42c1; --bg-color: #f2f2f7;
+        }
+        body { font-family: -apple-system, sans-serif; background-color: var(--bg-color); margin: 0; padding: 10px; color: #1c1c1e; }
+        
+        /* ロック画面のスタイル */
+        #lock-screen {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: var(--bg-color); z-index: 9999;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+        }
+        .lock-content { text-align: center; width: 80%; max-width: 300px; }
+        .pass-input { 
+            width: 100%; height: 60px; font-size: 2rem; text-align: center; 
+            letter-spacing: 1rem; border-radius: 15px; border: 2px solid #d1d1d6; margin-bottom: 20px;
+            background: white; -webkit-text-security: disc;
+        }
+
+        /* メインコンテンツ（初期は非表示） */
+        #main-app { display: none; }
+
+        .container { max-width: 500px; margin: 0 auto; }
+        .card { background: white; padding: 15px; border-radius: 15px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); margin-bottom: 15px; }
+        .form-group { margin-bottom: 12px; position: relative; }
+        label { display: block; margin-bottom: 4px; font-size: 0.8rem; color: #8e8e93; font-weight: 600; }
+        
+        input[type="date"] { width: 100%; max-width: 200px; height: 44px; padding: 0 12px; border: 1px solid #d1d1d6; border-radius: 10px; font-size: 1rem; box-sizing: border-box; }
+        input, select { width: 100%; height: 44px; padding: 0 12px; border: 1px solid #d1d1d6; border-radius: 10px; font-size: 1rem; box-sizing: border-box; background: #fff; }
+        .input-row { display: flex; gap: 6px; align-items: flex-end; }
+        
+        #search-status { position: absolute; right: 5px; top: 0; font-size: 0.7rem; color: var(--warning-color); font-weight: bold; }
+        .btn-sub { height: 44px; padding: 0 15px; background: #e5e5ea; color: var(--primary-color); border-radius: 10px; border: none; font-weight: bold; }
+        
+        .required-label { color: var(--danger-color); font-size: 0.7rem; margin-left: 5px; font-weight: bold; }
+        .flash-error { animation: flash 0.5s ease 3; border-color: var(--danger-color) !important; }
+        @keyframes flash { 50% { background-color: #ffcccc; transform: scale(1.05); } }
+
+        .live-preview { display: flex; justify-content: space-around; background: #f8f9fa; padding: 10px; border-radius: 10px; margin-top: 10px; border: 1px dashed #ccc; font-size: 0.8rem; }
+        .live-item { text-align: center; }
+        .live-item span { display: block; font-size: 0.65rem; color: #666; }
+        .live-item b { font-size: 0.9rem; }
+
+        .btn-main { width: 100%; padding: 14px; background: var(--primary-color); color: white; border: none; border-radius: 12px; font-size: 1rem; font-weight: bold; margin-top: 8px; }
+
+        .toggle-buttons { display: grid; grid-template-columns: repeat(5, 1fr); gap: 4px; margin-top: 6px; }
+        .btn-toggle { padding: 8px 1px; font-size: 0.65rem; border-radius: 6px; border: 1px solid #d1d1d6; background: #fff; font-weight: bold; }
+        .btn-toggle.active { background: var(--primary-color); color: white; border-color: var(--primary-color); }
+
+        .tabs { display: flex; gap: 10px; margin-bottom: 10px; }
+        .tab { flex: 1; padding: 10px; text-align: center; background: #e5e5ea; border-radius: 10px; font-weight: bold; color: #8e8e93; }
+        .tab.active { background: var(--primary-color); color: white; }
+
+        .summary-footer { background: #fff; padding: 15px; border-radius: 12px; margin-bottom: 15px; border: 1px solid #ddd; }
+        .sum-row { display: grid; grid-template-columns: 1fr auto auto; gap: 8px; margin-bottom: 6px; align-items: center; }
+        .sum-val { font-weight: bold; text-align: right; min-width: 80px; }
+        .pt-summary { margin-top: 10px; padding-top: 10px; border-top: 1px dashed #ccc; display: grid; grid-template-columns: repeat(3, 1fr); gap: 5px; font-size: 0.75rem; }
+        .pt-item { display: flex; justify-content: space-between; background: #f8f9fa; padding: 4px 6px; border-radius: 5px; }
+        .cash-total-item { background: #f0ebf8 !important; border: 1px solid var(--cash-color); }
+
+        .history-item { background: white; padding: 12px; border-radius: 12px; margin-bottom: 10px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+        .item-header { display: flex; gap: 5px; align-items: center; margin-bottom: 8px; flex-wrap: wrap; }
+        .date-badge { background: #555; color: #fff; padding: 2px 6px; border-radius: 4px; font-size: 0.65rem; }
+        .settled-badge { background: var(--success-color); }
+        .item-name { font-weight: bold; font-size: 0.85rem; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        
+        .item-grid { display: grid; grid-template-columns: 1fr 100px; gap: 10px; }
+        .info-col p { margin: 2px 0; font-size: 0.75rem; }
+        .badge { padding: 1px 5px; border-radius: 4px; font-size: 0.65rem; font-weight: bold; }
+        .shop-badge { background: #e3f2fd; color: #0d47a1; }
+        .pt-badge { background: #e8f5e9; color: #2e7d32; }
+        .jan-copy { color: var(--primary-color); font-size: 0.65rem; cursor: pointer; text-decoration: underline; display: block; margin-top: 3px; }
+        
+        .price-col { text-align: right; }
+        .profit-val { font-size: 1.1rem; font-weight: bold; color: var(--primary-color); }
+        .rate-val { font-size: 0.7rem; color: #666; margin-top: 2px; }
+
+        .action-btns { margin-top: 10px; display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+        .btn-action { padding: 9px; border-radius: 8px; border: none; font-size: 0.75rem; font-weight: bold; color: white; }
+        .btn-settle { background: var(--success-color); grid-column: span 2; }
+        .btn-edit { background: var(--warning-color); }
+        .btn-del { background: var(--danger-color); }
+
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 100; justify-content: center; align-items: center; }
+        .modal-content { background: white; padding: 20px; border-radius: 15px; width: 85%; max-width: 400px; }
+    </style>
+</head>
+<body>
+
+<div id="lock-screen">
+    <div class="lock-content">
+        <h2 style="font-size:1.2rem; margin-bottom:20px;">利益マネージャー<br><small style="font-weight:normal; color:#666;">パスコードを入力してください</small></h2>
+        <input type="tel" id="passInput" class="pass-input" maxlength="4" placeholder="••••" oninput="checkPasscode()">
+        <p id="errorMsg" style="color:var(--danger-color); font-size:0.8rem; display:none;">パスコードが違います</p>
+    </div>
+</div>
+
+<div id="main-app">
+    <div class="container">
+        <div class="card">
+            <div class="form-group"><label>購入日</label><input type="date" id="inputDate"></div>
+            <div class="form-group">
+                <label>JANコード <span id="search-status"></span></label>
+                <div class="input-row">
+                    <input type="tel" id="janCode" placeholder="13桁入力で検索" maxlength="13">
+                    <button class="btn-sub" onclick="pasteJan()">貼付</button>
+                </div>
+            </div>
+            <div class="form-group"><label>商品名</label><input type="text" id="productName" placeholder="検索または手入力"></div>
+            <div class="form-group">
+                <div class="input-row">
+                    <div style="flex:1" id="shop-area">
+                        <label>購入価格 <span id="shop-alert" class="required-label">※選択必須</span></label>
+                        <input type="number" inputmode="numeric" id="buyPrice" placeholder="選択後に有効" disabled oninput="updateLiveCalc()">
+                        <div class="toggle-buttons">
+                            <button class="btn-toggle shop-btn" onclick="setShop('楽天', this)">楽天</button>
+                            <button class="btn-toggle shop-btn" onclick="setShop('ヤフ', this)">ヤフ</button>
+                            <button class="btn-toggle shop-btn" onclick="setShop('Amz', this)">Amz</button>
+                            <button class="btn-toggle shop-btn" onclick="setShop('店舗', this)">店舗</button>
+                            <button class="btn-toggle shop-btn" onclick="setShop('他', this)">他</button>
+                        </div>
+                    </div>
+                    <div style="flex:1" id="pt-area">
+                        <label>ポイント <span id="pt-alert" class="required-label">※選択必須</span></label>
+                        <input type="number" inputmode="numeric" id="points" placeholder="選択後に有効" disabled oninput="updateLiveCalc()">
+                        <div class="toggle-buttons">
+                            <button class="btn-toggle pt-btn" onclick="setPt('楽天', this)">楽天</button>
+                            <button class="btn-toggle pt-btn" onclick="setPt('PayP', this)">PayP</button>
+                            <button class="btn-toggle pt-btn" onclick="setPt('Amz', this)">Amz</button>
+                            <button class="btn-toggle pt-btn" onclick="setPt('dPt', this)">dPt</button>
+                            <button class="btn-toggle pt-btn" onclick="setPt('他', this)">他</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="form-group">
+                <div class="input-row">
+                    <div style="flex:1.2"><label>売却予定価格</label><input type="number" inputmode="numeric" id="sellPrice" placeholder="0" oninput="updateLiveCalc()"></div>
+                    <div style="flex:0.8"><label>販売先</label>
+                        <select id="platform">
+                            <option value="モバイル一番">モバイル一番</option>
+                            <option value="買取一丁目">買取一丁目</option>
+                            <option value="森森買取">森森買取</option>
+                            <option value="買取商店">買取商店</option>
+                            <option value="メルカリ">メルカリ</option>
+                            <option value="ラクマ">ラクマ</option>
+                            <option value="ヤフオク">ヤフオク</option>
+                            <option value="その他">その他</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="live-preview" id="liveCalcArea">
+                <div class="live-item"><span>現金差額</span><b id="liveCash">0</b></div>
+                <div class="live-item"><span>予定利益</span><b id="liveProfit" style="color:var(--success-color)">0</b></div>
+                <div class="live-item"><span>予定率</span><b id="liveRate">0%</b></div>
+            </div>
+            
+            <button class="btn-main" id="saveBtn" onclick="saveData()">＋ 在庫に保存</button>
+        </div>
+
+        <div class="tabs">
+            <div class="tab active" id="tab-open" onclick="switchTab('open')">未決済</div>
+            <div class="tab" id="tab-closed" onclick="switchTab('closed')">利確済</div>
+        </div>
+
+        <div class="summary-footer">
+            <div class="sum-row"><span>合計現金差額:</span><span id="totalCash" class="sum-val" style="color:var(--cash-color)">0</span><span>円</span></div>
+            <div class="sum-row"><span id="profitLabel">合計予定利益:</span><span id="totalProfit" class="sum-val" style="color:var(--success-color)">0</span><span>円</span></div>
+            <div id="closedStats" style="display:none">
+                <div class="sum-row" style="color:#666; font-size:0.85rem;"><span>平均利益率:</span><span id="avgRate" class="sum-val">0</span><span>%</span></div>
+                <div class="pt-summary" id="ptBreakdown"></div>
+            </div>
+        </div>
+        <div id="historyList"></div>
+    </div>
+</div>
+
+<div id="settleModal" class="modal">
+    <div class="modal-content">
+        <h3 style="margin-top:0; font-size:1rem;">利益確定</h3>
+        <div class="form-group"><label>利確日</label><input type="date" id="finalDate"></div>
+        <div class="form-group"><label>最終売却価格</label><input type="number" inputmode="numeric" id="finalSellPrice"></div>
+        <div class="form-group">
+            <label>最終販売先</label>
+            <select id="finalPlatform">
+                <option value="モバイル一番">モバイル一番</option>
+                <option value="買取一丁目">買取一丁目</option>
+                <option value="森森買取">森森買取</option>
+                <option value="買取商店">買取商店</option>
+                <option value="メルカリ">メルカリ</option>
+                <option value="ラクマ">ラクマ</option>
+                <option value="ヤフオク">ヤフオク</option>
+                <option value="その他">その他</option>
+            </select>
+        </div>
+        <div class="action-btns">
+            <button class="btn-action btn-settle" onclick="executeSettle()">確定する</button>
+            <button class="btn-action" style="background:#8e8e93; grid-column: span 2;" onclick="closeModal()">キャンセル</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    /* パスコード設定（ここを好きな数字に変えてください） */
+    const CORRECT_PASSCODE = "5257";
+
+    function checkPasscode() {
+        const input = document.getElementById('passInput');
+        const error = document.getElementById('errorMsg');
+        if (input.value === CORRECT_PASSCODE) {
+            document.getElementById('lock-screen').style.display = 'none';
+            document.getElementById('main-app').style.display = 'block';
+            render(); // 認証後に描画
+        } else if (input.value.length === 4) {
+            error.style.display = 'block';
+            input.value = '';
+            setTimeout(() => { error.style.display = 'none'; }, 2000);
+        }
+    }
+
+    let historyData = JSON.parse(localStorage.getItem('myHistoryV43') || '[]');
+    let janLeaningData = JSON.parse(localStorage.getItem('janLeaningV39') || '{}');
+    let currentShop = ""; let currentPt = ""; let currentTab = 'open';
+    let targetSettleId = null; let editingId = null;
+
+    document.getElementById('inputDate').value = new Date().toISOString().split('T')[0];
+
+    function updateLiveCalc() {
+        const buy = parseInt(document.getElementById('buyPrice').value) || 0;
+        const pts = parseInt(document.getElementById('points').value) || 0;
+        const sell = parseInt(document.getElementById('sellPrice').value) || 0;
+        const cash = sell - buy;
+        const profit = sell + pts - buy;
+        const rate = sell > 0 ? ((profit / sell) * 100).toFixed(1) : 0;
+        document.getElementById('liveCash').innerText = cash.toLocaleString();
+        document.getElementById('liveProfit').innerText = profit.toLocaleString();
+        document.getElementById('liveRate').innerText = rate + "%";
+        document.getElementById('liveProfit').style.color = profit >= 0 ? 'var(--success-color)' : 'var(--danger-color)';
+    }
+
+    async function searchProduct(jan) {
+        if (jan.length !== 13) return;
+        const status = document.getElementById('search-status');
+        if (janLeaningData[jan]) {
+            document.getElementById('productName').value = janLeaningData[jan];
+            status.innerText = "⭐学習済";
+            setTimeout(() => status.innerText = "", 2000);
+            return;
+        }
+        status.innerText = "🔍...";
+        try {
+            const res = await fetch(`https://corsproxy.io/?${encodeURIComponent('https://kaitori.wiki/search?type=&keyword=' + jan)}`);
+            const html = await res.text();
+            const doc = new DOMParser().parseFromString(html, "text/html");
+            const tdElements = Array.from(doc.querySelectorAll('td'));
+            const nameTd = tdElements.find(td => td.innerText.includes(jan));
+            if (nameTd) {
+                const foundName = nameTd.innerText.replace(jan, '').replace(/\s+/g, ' ').trim();
+                document.getElementById('productName').value = foundName;
+                status.innerText = "✅";
+                janLeaningData[jan] = foundName;
+                localStorage.setItem('janLeaningV39', JSON.stringify(janLeaningData));
+            } else { status.innerText = "❓未登録"; }
+        } catch (e) { status.innerText = "⚠️"; }
+        setTimeout(() => status.innerText = "", 2000);
+    }
+
+    document.getElementById('janCode').addEventListener('input', (e) => {
+        if (e.target.value.length === 13) searchProduct(e.target.value);
+    });
+
+    function setShop(name, btn) {
+        document.querySelectorAll('.shop-btn').forEach(b => b.classList.remove('active'));
+        if(currentShop === name) {
+            currentShop = "";
+            document.getElementById('shop-alert').style.display = 'inline';
+            document.getElementById('buyPrice').disabled = true;
+        } else {
+            currentShop = name;
+            btn.classList.add('active');
+            document.getElementById('shop-alert').style.display = 'none';
+            document.getElementById('buyPrice').disabled = false;
+        }
+        updateLiveCalc();
+    }
+
+    function setPt(name, btn) {
+        document.querySelectorAll('.pt-btn').forEach(b => b.classList.remove('active'));
+        if(currentPt === name) {
+            currentPt = "";
+            document.getElementById('pt-alert').style.display = 'inline';
+            document.getElementById('points').disabled = true;
+        } else {
+            currentPt = name;
+            btn.classList.add('active');
+            document.getElementById('pt-alert').style.display = 'none';
+            document.getElementById('points').disabled = false;
+        }
+        updateLiveCalc();
+    }
+
+    async function pasteJan() {
+        const text = await navigator.clipboard.readText();
+        const clean = text.replace(/\D/g, '');
+        document.getElementById('janCode').value = clean;
+        searchProduct(clean);
+    }
+
+    function copyJan(jan) {
+        navigator.clipboard.writeText(jan);
+        alert('JANコピー完了');
+    }
+
+    function saveData() {
+        let error = false;
+        if(!currentShop) {
+            document.getElementById('shop-area').classList.add('flash-error');
+            setTimeout(() => document.getElementById('shop-area').classList.remove('flash-error'), 1500);
+            error = true;
+        }
+        if(!currentPt) {
+            document.getElementById('pt-area').classList.add('flash-error');
+            setTimeout(() => document.getElementById('pt-area').classList.remove('flash-error'), 1500);
+            error = true;
+        }
+        if(error) { alert("購入場所とポイントを選択してください！"); return; }
+
+        const pName = document.getElementById('productName').value || "商品名なし";
+        const jan = document.getElementById('janCode').value;
+        if (jan && jan.length === 13) {
+            janLeaningData[jan] = pName;
+            localStorage.setItem('janLeaningV39', JSON.stringify(janLeaningData));
+        }
+
+        const item = {
+            id: editingId || Date.now(),
+            date: document.getElementById('inputDate').value.slice(5).replace('-', '/'),
+            fullDate: document.getElementById('inputDate').value,
+            settleDate: "",
+            name: pName,
+            jan: jan,
+            buy: parseInt(document.getElementById('buyPrice').value) || 0,
+            sell: parseInt(document.getElementById('sellPrice').value) || 0,
+            pts: parseInt(document.getElementById('points').value) || 0,
+            shop: currentShop, ptName: currentPt,
+            platform: document.getElementById('platform').value,
+            profit: 0, cash: 0, settled: false
+        };
+        item.profit = item.sell + item.pts - item.buy;
+        item.cash = item.sell - item.buy;
+
+        if(editingId) {
+            historyData = historyData.map(i => i.id === editingId ? item : i);
+            editingId = null;
+        } else {
+            historyData.unshift(item);
+        }
+        localStorage.setItem('myHistoryV43', JSON.stringify(historyData));
+        location.reload();
+    }
+
+    function editItem(id) {
+        const item = historyData.find(i => i.id === id);
+        editingId = id;
+        document.getElementById('inputDate').value = item.fullDate;
+        document.getElementById('janCode').value = item.jan;
+        document.getElementById('productName').value = item.name;
+        document.getElementById('buyPrice').value = item.buy;
+        document.getElementById('sellPrice').value = item.sell;
+        document.getElementById('points').value = item.pts;
+        document.getElementById('platform').value = item.platform;
+        setShop(item.shop, [...document.querySelectorAll('.shop-btn')].find(b => b.innerText === item.shop));
+        setPt(item.ptName, [...document.querySelectorAll('.pt-btn')].find(b => b.innerText === item.ptName));
+        document.getElementById('saveBtn').innerText = "💾 修正を保存";
+        updateLiveCalc();
+        window.scrollTo(0,0);
+    }
+
+    function openSettleModal(id) {
+        targetSettleId = id;
+        const item = historyData.find(i => i.id === id);
+        document.getElementById('finalDate').value = new Date().toISOString().split('T')[0];
+        document.getElementById('finalSellPrice').value = item.sell;
+        document.getElementById('finalPlatform').value = item.platform;
+        document.getElementById('settleModal').style.display = 'flex';
+    }
+
+    function closeModal() { document.getElementById('settleModal').style.display = 'none'; }
+
+    function executeSettle() {
+        const finalSell = parseInt(document.getElementById('finalSellPrice').value) || 0;
+        const finalD = document.getElementById('finalDate').value;
+        const item = historyData.find(i => i.id === targetSettleId);
+        item.sell = finalSell;
+        item.platform = document.getElementById('finalPlatform').value;
+        item.profit = finalSell + item.pts - item.buy;
+        item.cash = finalSell - item.buy;
+        item.settled = true;
+        item.settleDate = finalD ? finalD.slice(5).replace('-', '/') : "";
+        localStorage.setItem('myHistoryV43', JSON.stringify(historyData));
+        closeModal(); render();
+    }
+
+    function switchTab(tab) {
+        currentTab = tab;
+        document.getElementById('tab-open').classList.toggle('active', tab === 'open');
+        document.getElementById('tab-closed').classList.toggle('active', tab === 'closed');
+        render();
+    }
+
+    function render() {
+        const list = document.getElementById('historyList');
+        if(!list) return; // ロック中対策
+        const filtered = historyData.filter(i => currentTab === 'open' ? !i.settled : i.settled);
+        let totalP = 0, totalC = 0, totalRate = 0;
+        let ptSum = { "楽天": 0, "PayP": 0, "Amz": 0, "dPt": 0, "他": 0 };
+        document.getElementById('profitLabel').innerText = currentTab === 'open' ? "合計予定利益:" : "合計利益:";
+        document.getElementById('closedStats').style.display = currentTab === 'open' ? "none" : "block";
+        list.innerHTML = filtered.map(item => {
+            totalP += item.profit; totalC += item.cash;
+            const rate = ((item.profit / (item.sell || 1)) * 100);
+            totalRate += rate;
+            if(item.settled) ptSum[item.ptName] = (ptSum[item.ptName] || 0) + item.pts;
+            return `
+                <div class="history-item">
+                    <div class="item-header">
+                        <span class="date-badge">${item.date} 入</span>
+                        ${item.settled ? `<span class="date-badge settled-badge">${item.settleDate} 確</span>` : ''}
+                        <span class="item-name">${item.name}</span>
+                    </div>
+                    <div class="item-grid">
+                        <div class="info-col">
+                            <p>購入: <b>${item.buy.toLocaleString()}</b> <span class="badge shop-badge">${item.shop}</span></p>
+                            <p>売却: <b>${item.sell.toLocaleString()}</b> <span class="badge shop-badge">${item.platform}</span></p>
+                            <p style="color:var(--cash-color)">現金: <b>${item.cash.toLocaleString()}円</b> <span class="badge pt-badge">+${item.pts}(${item.ptName})</span></p>
+                            ${item.jan ? `<span class="jan-copy" onclick="copyJan('${item.jan}')">📋 ${item.jan}</span>` : ''}
+                        </div>
+                        <div class="price-col">
+                            <div class="profit-val" style="color:${item.profit >= 0 ? 'var(--success-color)' : 'var(--danger-color)'}">${item.profit.toLocaleString()}円</div>
+                            <div class="rate-val">利益率: ${rate.toFixed(1)}%</div>
+                        </div>
+                    </div>
+                    <div class="action-btns">
+                        ${!item.settled ? `<button class="btn-action btn-settle" onclick="openSettleModal(${item.id})">利益確定する</button>` : ''}
+                        <button class="btn-action btn-edit" onclick="editItem(${item.id})">編集</button>
+                        <button class="btn-action btn-del" onclick="if(confirm('削除しますか？')){historyData=historyData.filter(i=>i.id!==${item.id});localStorage.setItem('myHistoryV43',JSON.stringify(historyData));render();}">削除</button>
+                    </div>
+                </div>
+            `;
+        }).join('');
+        document.getElementById('totalProfit').innerText = totalP.toLocaleString();
+        document.getElementById('totalCash').innerText = totalC.toLocaleString();
+        if(currentTab === 'closed' && filtered.length > 0) {
+            document.getElementById('avgRate').innerText = (totalRate / filtered.length).toFixed(1);
+            let ptHTML = Object.entries(ptSum).map(([name, val]) => `<div class="pt-item"><span>${name}:</span><b>${val.toLocaleString()}</b></div>`).join('');
+            ptHTML += `<div class="pt-item cash-total-item"><span>現金合計:</span><b>${totalC.toLocaleString()}</b></div>`;
+            document.getElementById('ptBreakdown').innerHTML = ptHTML;
+        }
+    }
+    // 初期描画は認証後に行うためここでは呼ばない
+</script>
+</body>
+</html>
