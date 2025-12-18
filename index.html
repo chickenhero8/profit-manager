@@ -4,7 +4,15 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="robots" content="noindex,nofollow">
-    <title>利益計算マネージャー v44</title>
+    
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="利益計算">
+    
+    <link rel="apple-touch-icon" href="https://img.icons8.com/fluent/180/000000/calculator.png">
+    <link rel="icon" type="image/png" href="https://img.icons8.com/fluent/48/000000/calculator.png">
+
+    <title>利益計算マネージャー v45</title>
     <style>
         :root {
             --primary-color: #3876f0; --success-color: #28a745;
@@ -13,7 +21,7 @@
         }
         body { font-family: -apple-system, sans-serif; background-color: var(--bg-color); margin: 0; padding: 10px; color: #1c1c1e; }
         
-        /* ロック画面のスタイル */
+        /* ロック画面 */
         #lock-screen {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: var(--bg-color); z-index: 9999;
@@ -23,19 +31,18 @@
         .pass-input { 
             width: 100%; height: 60px; font-size: 2rem; text-align: center; 
             letter-spacing: 1rem; border-radius: 15px; border: 2px solid #d1d1d6; margin-bottom: 20px;
-            background: white; -webkit-text-security: disc;
+            background: white; -webkit-text-security: disc; outline: none;
         }
 
-        /* メインコンテンツ（初期は非表示） */
         #main-app { display: none; }
 
+        /* デザインパーツ */
         .container { max-width: 500px; margin: 0 auto; }
         .card { background: white; padding: 15px; border-radius: 15px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); margin-bottom: 15px; }
         .form-group { margin-bottom: 12px; position: relative; }
         label { display: block; margin-bottom: 4px; font-size: 0.8rem; color: #8e8e93; font-weight: 600; }
         
-        input[type="date"] { width: 100%; max-width: 200px; height: 44px; padding: 0 12px; border: 1px solid #d1d1d6; border-radius: 10px; font-size: 1rem; box-sizing: border-box; }
-        input, select { width: 100%; height: 44px; padding: 0 12px; border: 1px solid #d1d1d6; border-radius: 10px; font-size: 1rem; box-sizing: border-box; background: #fff; }
+        input[type="date"], input, select { width: 100%; height: 44px; padding: 0 12px; border: 1px solid #d1d1d6; border-radius: 10px; font-size: 1rem; box-sizing: border-box; background: #fff; }
         .input-row { display: flex; gap: 6px; align-items: flex-end; }
         
         #search-status { position: absolute; right: 5px; top: 0; font-size: 0.7rem; color: var(--warning-color); font-weight: bold; }
@@ -98,7 +105,7 @@
 
 <div id="lock-screen">
     <div class="lock-content">
-        <h2 style="font-size:1.2rem; margin-bottom:20px;">利益マネージャー<br><small style="font-weight:normal; color:#666;">パスコードを入力してください</small></h2>
+        <h2 style="font-size:1.2rem; margin-bottom:20px;">利益マネージャー<br><small style="font-weight:normal; color:#666;">パスコードを入力</small></h2>
         <input type="tel" id="passInput" class="pass-input" maxlength="4" placeholder="••••" oninput="checkPasscode()">
         <p id="errorMsg" style="color:var(--danger-color); font-size:0.8rem; display:none;">パスコードが違います</p>
     </div>
@@ -115,12 +122,12 @@
                     <button class="btn-sub" onclick="pasteJan()">貼付</button>
                 </div>
             </div>
-            <div class="form-group"><label>商品名</label><input type="text" id="productName" placeholder="検索または手入力"></div>
+            <div class="form-group"><label>商品名</label><input type="text" id="productName"></div>
             <div class="form-group">
                 <div class="input-row">
                     <div style="flex:1" id="shop-area">
                         <label>購入価格 <span id="shop-alert" class="required-label">※選択必須</span></label>
-                        <input type="number" inputmode="numeric" id="buyPrice" placeholder="選択後に有効" disabled oninput="updateLiveCalc()">
+                        <input type="number" inputmode="numeric" id="buyPrice" disabled oninput="updateLiveCalc()">
                         <div class="toggle-buttons">
                             <button class="btn-toggle shop-btn" onclick="setShop('楽天', this)">楽天</button>
                             <button class="btn-toggle shop-btn" onclick="setShop('ヤフ', this)">ヤフ</button>
@@ -131,7 +138,7 @@
                     </div>
                     <div style="flex:1" id="pt-area">
                         <label>ポイント <span id="pt-alert" class="required-label">※選択必須</span></label>
-                        <input type="number" inputmode="numeric" id="points" placeholder="選択後に有効" disabled oninput="updateLiveCalc()">
+                        <input type="number" inputmode="numeric" id="points" disabled oninput="updateLiveCalc()">
                         <div class="toggle-buttons">
                             <button class="btn-toggle pt-btn" onclick="setPt('楽天', this)">楽天</button>
                             <button class="btn-toggle pt-btn" onclick="setPt('PayP', this)">PayP</button>
@@ -144,7 +151,7 @@
             </div>
             <div class="form-group">
                 <div class="input-row">
-                    <div style="flex:1.2"><label>売却予定価格</label><input type="number" inputmode="numeric" id="sellPrice" placeholder="0" oninput="updateLiveCalc()"></div>
+                    <div style="flex:1.2"><label>売却予定価格</label><input type="number" inputmode="numeric" id="sellPrice" oninput="updateLiveCalc()"></div>
                     <div style="flex:0.8"><label>販売先</label>
                         <select id="platform">
                             <option value="モバイル一番">モバイル一番</option>
@@ -160,12 +167,11 @@
                 </div>
             </div>
             
-            <div class="live-preview" id="liveCalcArea">
+            <div class="live-preview">
                 <div class="live-item"><span>現金差額</span><b id="liveCash">0</b></div>
                 <div class="live-item"><span>予定利益</span><b id="liveProfit" style="color:var(--success-color)">0</b></div>
                 <div class="live-item"><span>予定率</span><b id="liveRate">0%</b></div>
             </div>
-            
             <button class="btn-main" id="saveBtn" onclick="saveData()">＋ 在庫に保存</button>
         </div>
 
@@ -188,7 +194,7 @@
 
 <div id="settleModal" class="modal">
     <div class="modal-content">
-        <h3 style="margin-top:0; font-size:1rem;">利益確定</h3>
+        <h3>利益確定</h3>
         <div class="form-group"><label>利確日</label><input type="date" id="finalDate"></div>
         <div class="form-group"><label>最終売却価格</label><input type="number" inputmode="numeric" id="finalSellPrice"></div>
         <div class="form-group">
@@ -205,15 +211,14 @@
             </select>
         </div>
         <div class="action-btns">
-            <button class="btn-action btn-settle" onclick="executeSettle()">確定する</button>
-            <button class="btn-action" style="background:#8e8e93; grid-column: span 2;" onclick="closeModal()">キャンセル</button>
+            <button class="btn-action btn-settle" onclick="executeSettle()">確定</button>
+            <button class="btn-action" style="background:#8e8e93; grid-column: span 2;" onclick="closeModal()">戻る</button>
         </div>
     </div>
 </div>
 
 <script>
-    /* パスコード設定（ここを好きな数字に変えてください） */
-    const CORRECT_PASSCODE = "5257";
+    const CORRECT_PASSCODE = "1234"; // パスワード設定
 
     function checkPasscode() {
         const input = document.getElementById('passInput');
@@ -221,7 +226,7 @@
         if (input.value === CORRECT_PASSCODE) {
             document.getElementById('lock-screen').style.display = 'none';
             document.getElementById('main-app').style.display = 'block';
-            render(); // 認証後に描画
+            render();
         } else if (input.value.length === 4) {
             error.style.display = 'block';
             input.value = '';
@@ -324,32 +329,18 @@
 
     function saveData() {
         let error = false;
-        if(!currentShop) {
-            document.getElementById('shop-area').classList.add('flash-error');
-            setTimeout(() => document.getElementById('shop-area').classList.remove('flash-error'), 1500);
-            error = true;
-        }
-        if(!currentPt) {
-            document.getElementById('pt-area').classList.add('flash-error');
-            setTimeout(() => document.getElementById('pt-area').classList.remove('flash-error'), 1500);
-            error = true;
-        }
-        if(error) { alert("購入場所とポイントを選択してください！"); return; }
+        if(!currentShop) { document.getElementById('shop-area').classList.add('flash-error'); error = true; }
+        if(!currentPt) { document.getElementById('pt-area').classList.add('flash-error'); error = true; }
+        if(error) { setTimeout(() => { document.querySelectorAll('.flash-error').forEach(e => e.classList.remove('flash-error')); }, 1500); return; }
 
         const pName = document.getElementById('productName').value || "商品名なし";
         const jan = document.getElementById('janCode').value;
-        if (jan && jan.length === 13) {
-            janLeaningData[jan] = pName;
-            localStorage.setItem('janLeaningV39', JSON.stringify(janLeaningData));
-        }
-
         const item = {
             id: editingId || Date.now(),
             date: document.getElementById('inputDate').value.slice(5).replace('-', '/'),
             fullDate: document.getElementById('inputDate').value,
             settleDate: "",
-            name: pName,
-            jan: jan,
+            name: pName, jan: jan,
             buy: parseInt(document.getElementById('buyPrice').value) || 0,
             sell: parseInt(document.getElementById('sellPrice').value) || 0,
             pts: parseInt(document.getElementById('points').value) || 0,
@@ -363,9 +354,7 @@
         if(editingId) {
             historyData = historyData.map(i => i.id === editingId ? item : i);
             editingId = null;
-        } else {
-            historyData.unshift(item);
-        }
+        } else { historyData.unshift(item); }
         localStorage.setItem('myHistoryV43', JSON.stringify(historyData));
         location.reload();
     }
@@ -421,7 +410,7 @@
 
     function render() {
         const list = document.getElementById('historyList');
-        if(!list) return; // ロック中対策
+        if(!list) return;
         const filtered = historyData.filter(i => currentTab === 'open' ? !i.settled : i.settled);
         let totalP = 0, totalC = 0, totalRate = 0;
         let ptSum = { "楽天": 0, "PayP": 0, "Amz": 0, "dPt": 0, "他": 0 };
@@ -468,7 +457,6 @@
             document.getElementById('ptBreakdown').innerHTML = ptHTML;
         }
     }
-    // 初期描画は認証後に行うためここでは呼ばない
 </script>
 </body>
 </html>
