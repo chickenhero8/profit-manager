@@ -12,7 +12,7 @@
     <link rel="apple-touch-icon" href="https://img.icons8.com/fluent/180/000000/calculator.png">
     <link rel="icon" type="image/png" href="https://img.icons8.com/fluent/48/000000/calculator.png">
 
-    <title>利益計算マネージャー v46</title>
+    <title>利益計算マネージャー v47</title>
     <style>
         :root {
             --primary-color: #3876f0; --success-color: #28a745;
@@ -79,6 +79,7 @@
         .badge { padding: 1px 5px; border-radius: 4px; font-size: 0.65rem; font-weight: bold; }
         .shop-badge { background: #e3f2fd; color: #0d47a1; }
         .pt-badge { background: #e8f5e9; color: #2e7d32; }
+        .jan-copy { color: var(--primary-color); font-size: 0.65rem; cursor: pointer; text-decoration: underline; display: block; margin-top: 3px; }
         
         .price-col { text-align: right; }
         .profit-val { font-size: 1.1rem; font-weight: bold; color: var(--primary-color); }
@@ -213,13 +214,10 @@
 <script>
     const CORRECT_PASSCODE = "1234"; 
 
-    // 起動時の処理
     function initApp() {
-        // セッションストレージを確認（ブラウザを閉じるまで有効）
         if (sessionStorage.getItem('isUnlocked') === 'true') {
             unlockApp();
         } else {
-            // パスコード入力欄に自動フォーカス
             document.getElementById('passInput').focus();
         }
     }
@@ -228,7 +226,7 @@
         const input = document.getElementById('passInput');
         const error = document.getElementById('errorMsg');
         if (input.value === CORRECT_PASSCODE) {
-            sessionStorage.setItem('isUnlocked', 'true'); // セッションに保存
+            sessionStorage.setItem('isUnlocked', 'true');
             unlockApp();
         } else if (input.value.length === 4) {
             error.style.display = 'block';
@@ -243,7 +241,6 @@
         render();
     }
 
-    /* 以下、アプリロジックはv45を継承 */
     let historyData = JSON.parse(localStorage.getItem('myHistoryV43') || '[]');
     let janLeaningData = JSON.parse(localStorage.getItem('janLeaningV39') || '{}');
     let currentShop = ""; let currentPt = ""; let currentTab = 'open';
@@ -326,6 +323,11 @@
         const clean = text.replace(/\D/g, '');
         document.getElementById('janCode').value = clean;
         searchProduct(clean);
+    }
+
+    function copyJan(jan) {
+        navigator.clipboard.writeText(jan);
+        alert('JANコピー完了');
     }
 
     function saveData() {
@@ -427,6 +429,7 @@
                             <p>購入: <b>${item.buy.toLocaleString()}</b> <span class="badge shop-badge">${item.shop}</span></p>
                             <p>売却: <b>${item.sell.toLocaleString()}</b> <span class="badge shop-badge">${item.platform}</span></p>
                             <p style="color:var(--cash-color)">現金: <b>${item.cash.toLocaleString()}円</b> <span class="badge pt-badge">+${item.pts}(${item.ptName})</span></p>
+                            ${item.jan ? `<span class="jan-copy" onclick="copyJan('${item.jan}')">📋 ${item.jan}</span>` : ''}
                         </div>
                         <div class="price-col">
                             <div class="profit-val" style="color:${item.profit >= 0 ? 'var(--success-color)' : 'var(--danger-color)'}">${item.profit.toLocaleString()}円</div>
