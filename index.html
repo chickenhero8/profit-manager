@@ -12,7 +12,7 @@
     <link rel="apple-touch-icon" href="https://img.icons8.com/fluent/180/000000/calculator.png">
     <link rel="icon" type="image/png" href="https://img.icons8.com/fluent/48/000000/calculator.png">
 
-    <title>利益計算マネージャー v47</title>
+    <title>利益計算マネージャー v50</title>
     <style>
         :root {
             --primary-color: #3876f0; --success-color: #28a745;
@@ -69,17 +69,24 @@
         .pt-item { display: flex; justify-content: space-between; background: #f8f9fa; padding: 4px 6px; border-radius: 5px; }
 
         .history-item { background: white; padding: 12px; border-radius: 12px; margin-bottom: 10px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
-        .item-header { display: flex; gap: 5px; align-items: center; margin-bottom: 8px; flex-wrap: wrap; }
-        .date-badge { background: #555; color: #fff; padding: 2px 6px; border-radius: 4px; font-size: 0.65rem; }
+        .item-header { display: flex; gap: 5px; align-items: flex-start; margin-bottom: 8px; cursor: pointer; }
+        .date-badge { background: #555; color: #fff; padding: 2px 6px; border-radius: 4px; font-size: 0.65rem; white-space: nowrap; margin-top: 2px; }
         .settled-badge { background: var(--success-color); }
-        .item-name { font-weight: bold; font-size: 0.85rem; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        
+        .item-name { font-weight: bold; font-size: 0.85rem; flex: 1; color: #1c1c1e; line-height: 1.3; }
+        .truncate { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
         
         .item-grid { display: grid; grid-template-columns: 1fr 100px; gap: 10px; }
         .info-col p { margin: 2px 0; font-size: 0.75rem; }
         .badge { padding: 1px 5px; border-radius: 4px; font-size: 0.65rem; font-weight: bold; }
         .shop-badge { background: #e3f2fd; color: #0d47a1; }
         .pt-badge { background: #e8f5e9; color: #2e7d32; }
-        .jan-copy { color: var(--primary-color); font-size: 0.65rem; cursor: pointer; text-decoration: underline; display: block; margin-top: 3px; }
+        
+        /* JANコピー部分のスタイル */
+        .jan-container { display: flex; align-items: center; gap: 8px; margin-top: 3px; }
+        .jan-copy { color: var(--primary-color); font-size: 0.65rem; cursor: pointer; text-decoration: underline; }
+        .copy-toast { font-size: 0.65rem; color: var(--success-color); font-weight: bold; opacity: 0; transition: opacity 0.3s; pointer-events: none; }
+        .copy-toast.show { opacity: 1; }
         
         .price-col { text-align: right; }
         .profit-val { font-size: 1.1rem; font-weight: bold; color: var(--primary-color); }
@@ -325,9 +332,18 @@
         searchProduct(clean);
     }
 
-    function copyJan(jan) {
+    // メッセージ付きJANコピー
+    function copyJan(jan, id) {
         navigator.clipboard.writeText(jan);
-        alert('JANコピー完了');
+        const toast = document.getElementById('toast-' + id);
+        if(toast) {
+            toast.classList.add('show');
+            setTimeout(() => { toast.classList.remove('show'); }, 2000);
+        }
+    }
+
+    function toggleName(el) {
+        el.classList.toggle('truncate');
     }
 
     function saveData() {
@@ -417,19 +433,24 @@
             const rate = ((item.profit / (item.sell || 1)) * 100);
             totalRate += rate;
             if(item.settled) ptSum[item.ptName] = (ptSum[item.ptName] || 0) + item.pts;
+            
             return `
                 <div class="history-item">
-                    <div class="item-header">
+                    <div class="item-header" onclick="toggleName(this.querySelector('.item-name'))">
                         <span class="date-badge">${item.date} 入</span>
                         ${item.settled ? `<span class="date-badge settled-badge">${item.settleDate} 確</span>` : ''}
-                        <span class="item-name">${item.name}</span>
+                        <span class="item-name truncate">${item.name}</span>
                     </div>
                     <div class="item-grid">
                         <div class="info-col">
                             <p>購入: <b>${item.buy.toLocaleString()}</b> <span class="badge shop-badge">${item.shop}</span></p>
                             <p>売却: <b>${item.sell.toLocaleString()}</b> <span class="badge shop-badge">${item.platform}</span></p>
                             <p style="color:var(--cash-color)">現金: <b>${item.cash.toLocaleString()}円</b> <span class="badge pt-badge">+${item.pts}(${item.ptName})</span></p>
-                            ${item.jan ? `<span class="jan-copy" onclick="copyJan('${item.jan}')">📋 ${item.jan}</span>` : ''}
+                            ${item.jan ? `
+                                <div class="jan-container">
+                                    <span class="jan-copy" onclick="copyJan('${item.jan}', '${item.id}')">📋 ${item.jan}</span>
+                                    <span class="copy-toast" id="toast-${item.id}">コピー完了！</span>
+                                </div>` : ''}
                         </div>
                         <div class="price-col">
                             <div class="profit-val" style="color:${item.profit >= 0 ? 'var(--success-color)' : 'var(--danger-color)'}">${item.profit.toLocaleString()}円</div>
